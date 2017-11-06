@@ -3,8 +3,10 @@ package config
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"text/template"
 
 	"github.com/pkg/errors"
@@ -71,6 +73,18 @@ func initEnvReplacer() {
 				v = k
 			}
 			return v
+		},
+		"must_env": func(key string) string {
+			if v := os.Getenv(key); v != "" {
+				return v
+			}
+			for _, env := range os.Environ() {
+				if strings.HasPrefix(env, key+"=") {
+					// defined but empty string
+					return ""
+				}
+			}
+			panic(fmt.Sprintf("environment variable %s is not defined", key))
 		},
 	})
 }

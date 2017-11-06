@@ -230,3 +230,51 @@ func genConfigYaml(name string, config string) (string, error) {
 	}
 	return path, nil
 }
+
+func TestLoadMustEnvPanic(t *testing.T) {
+	f, err := genConfigYaml("must-panic.yml", `## must.yml
+domain: '{{ must_env "MUST_DOMAIN_PANIC" }}'
+`)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("must_env must raise panic")
+		} else {
+			t.Logf("must_env raise panic:%s", r)
+		}
+	}()
+
+	c := &Conf{}
+	config.LoadWithEnv(c, f)
+}
+
+func TestLoadMustEnv(t *testing.T) {
+	f, err := genConfigYaml("must.yml", `## must.yml
+domain: '{{ must_env "MUST_DOMAIN" }}'
+`)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	mustDomain := "must.example.com"
+	os.Setenv("MUST_DOMAIN", mustDomain)
+	c := &Conf{}
+	if err := config.LoadWithEnv(c, f); err != nil {
+		t.Error(err)
+	}
+	if c.Domain != mustDomain {
+		t.Errorf("domain expected %s got %s", mustDomain, c.Domain)
+	}
+
+	os.Setenv("MUST_DOMAIN", "")
+	c2 := &Conf{}
+	if err := config.LoadWithEnv(c2, f); err != nil {
+		t.Error(err)
+	}
+	if c2.Domain != "" {
+		t.Errorf("domain expected \"\" got %s", c2.Domain)
+	}
+}
