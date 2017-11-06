@@ -3,6 +3,7 @@ package config
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"text/template"
@@ -71,6 +72,12 @@ func initEnvReplacer() {
 				v = k
 			}
 			return v
+		},
+		"must_env": func(key string) string {
+			if v, ok := os.LookupEnv(key); ok {
+				return v
+			}
+			panic(fmt.Sprintf("environment variable %s is not defined", key))
 		},
 	})
 }
