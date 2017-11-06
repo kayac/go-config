@@ -66,8 +66,8 @@ domain: dev.example.com
 is_dev: true
 `
 	conf := &Conf{}
-	baseConfigYaml, _ := genConfigYaml("config.yml", baseConfig)         // /path/to/config.yml
-	localConfigYaml, _ := genConfigYaml("config_local.yml", localConfig) // /path/to/config_local.yml
+	baseConfigYaml, _ := genConfigFile("config.yml", baseConfig)         // /path/to/config.yml
+	localConfigYaml, _ := genConfigFile("config_local.yml", localConfig) // /path/to/config_local.yml
 
 	err := config.Load(conf, baseConfigYaml, localConfigYaml)
 	if err != nil {
@@ -111,8 +111,8 @@ db:
 	os.Setenv("DB_NAME", "example_local")
 
 	conf := &Conf{}
-	baseConfigYaml, _ := genConfigYaml("config.yml", baseConfig)         // /path/to/config.yml
-	localConfigYaml, _ := genConfigYaml("config_local.yml", localConfig) // /path/to/config_local.yml
+	baseConfigYaml, _ := genConfigFile("config.yml", baseConfig)         // /path/to/config.yml
+	localConfigYaml, _ := genConfigFile("config_local.yml", localConfig) // /path/to/config_local.yml
 
 	err := config.LoadWithEnv(conf, baseConfigYaml, localConfigYaml)
 	if err != nil {
@@ -125,7 +125,7 @@ db:
 }
 
 func TestLoad(t *testing.T) {
-	a, err := genConfigYaml("a.yml", `## a.yml
+	a, err := genConfigFile("a.yml", `## a.yml
 domain: example.com
 db:
   master:  rw@/example
@@ -136,14 +136,14 @@ db:
 		t.Error(err)
 		return
 	}
-	b, err := genConfigYaml("b.yml", `## b.yml
+	b, err := genConfigFile("b.yml", `## b.yml
 is_dev: true
 `)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	c, err := genConfigYaml("c.yml", `## c.yml
+	c, err := genConfigFile("c.yml", `## c.yml
 db:
   master:  rw@/example2
   slave:   ro@/example2
@@ -153,7 +153,7 @@ db:
 		t.Error(err)
 		return
 	}
-	er, err := genConfigYaml("err.yml", `## err.yml
+	er, err := genConfigFile("err.yml", `## err.yml
 db:
   master  rw@/example2
 `)
@@ -216,10 +216,9 @@ db:
 		t.Errorf("err.yml is format err.")
 	}
 	t.Log(err)
-
 }
 
-func genConfigYaml(name string, config string) (string, error) {
+func genConfigFile(name string, config string) (string, error) {
 	path := filepath.Join(dir, name)
 	io, err := os.Create(path)
 	if err != nil {
@@ -232,7 +231,7 @@ func genConfigYaml(name string, config string) (string, error) {
 }
 
 func TestLoadMustEnvPanic(t *testing.T) {
-	f, err := genConfigYaml("must-panic.yml", `## must.yml
+	f, err := genConfigFile("must-panic.yml", `## must.yml
 domain: '{{ must_env "MUST_DOMAIN_PANIC" }}'
 `)
 	if err != nil {
@@ -252,7 +251,7 @@ domain: '{{ must_env "MUST_DOMAIN_PANIC" }}'
 }
 
 func TestLoadMustEnv(t *testing.T) {
-	f, err := genConfigYaml("must.yml", `## must.yml
+	f, err := genConfigFile("must.yml", `## must.yml
 domain: '{{ must_env "MUST_DOMAIN" }}'
 `)
 	if err != nil {
@@ -276,5 +275,36 @@ domain: '{{ must_env "MUST_DOMAIN" }}'
 	}
 	if c2.Domain != "" {
 		t.Errorf("domain expected \"\" got %s", c2.Domain)
+	}
+}
+
+func TestLoadJSON(t *testing.T) {
+	a, err := genConfigFile("a.json", `{
+  "foo": "bar",
+  "env_foo": "{{ env "FOO" }}"
+}`)
+	if err != nil {
+		t.Error(err)
+	}
+	b, err := genConfigFile("b.json", `{
+  "bar": "baz"
+}`)
+	if err != nil {
+		t.Error(err)
+	}
+	os.Setenv("FOO", "BOO")
+	c := make(map[string]string)
+	err = config.LoadWithEnvJSON(&c, a, b)
+	if err != nil {
+		t.Error(err)
+	}
+	if c["foo"] != "bar" {
+		t.Errorf("foo expected bar got %s", c["foo"])
+	}
+	if c["env_foo"] != "BOO" {
+		t.Errorf("env_foo expected BOO got %s", c["env_foo"])
+	}
+	if c["bar"] != "baz" {
+		t.Errorf("bar expected baz got %s", c["bar"])
 	}
 }
