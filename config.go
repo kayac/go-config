@@ -3,6 +3,7 @@ package config
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -18,22 +19,35 @@ func init() {
 
 type customFunc func(data []byte) ([]byte, error)
 
-// Yaml files load from `configPaths`.
+type unmarshaler func([]byte, interface{}) error
+
+// Load loads YAML files from `configPaths`.
 // and assigns decoded values into the `conf` value.
 func Load(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, nil, configPaths)
+	return loadWithFunc(conf, nil, configPaths, yaml.Unmarshal)
 }
 
-// Load with Env
+// Load loads JSON files from `configPaths`.
+// and assigns decoded values into the `conf` value.
+func LoadJSON(conf interface{}, configPaths ...string) error {
+	return loadWithFunc(conf, nil, configPaths, json.Unmarshal)
+}
+
+// LoadWithEnv loads YAML files with Env
 // replace {{ env "ENV" }} to os.Getenv("ENV")
 // if you set default value then {{ env "ENV" "default" }}
 func LoadWithEnv(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, envReplacer, configPaths)
+	return loadWithFunc(conf, envReplacer, configPaths, yaml.Unmarshal)
 }
 
-func loadWithFunc(conf interface{}, custom customFunc, configPaths []string) error {
+// LoadWithEnv loads JSON files with Env
+func LoadWithEnvJSON(conf interface{}, configPaths ...string) error {
+	return loadWithFunc(conf, envReplacer, configPaths, json.Unmarshal)
+}
+
+func loadWithFunc(conf interface{}, custom customFunc, configPaths []string, unmarshal unmarshaler) error {
 	for _, configPath := range configPaths {
-		err := loadConfig(configPath, conf, custom)
+		err := loadConfig(configPath, conf, custom, unmarshal)
 		if err != nil {
 			return err
 		}
@@ -41,7 +55,7 @@ func loadWithFunc(conf interface{}, custom customFunc, configPaths []string) err
 	return nil
 }
 
-func loadConfig(configPath string, conf interface{}, custom customFunc) error {
+func loadConfig(configPath string, conf interface{}, custom customFunc, unmarshal unmarshaler) error {
 	data, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return errors.Wrapf(err, "%s read failed", configPath)
@@ -52,7 +66,7 @@ func loadConfig(configPath string, conf interface{}, custom customFunc) error {
 			return errors.Wrapf(err, "%s yaml custom failed", configPath)
 		}
 	}
-	if err := yaml.Unmarshal(data, conf); err != nil {
+	if err := unmarshal(data, conf); err != nil {
 		return errors.Wrapf(err, "%s yaml parse failed", configPath)
 	}
 	return nil
