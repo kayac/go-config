@@ -9,6 +9,7 @@ import (
 	"os"
 	"text/template"
 
+	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
@@ -33,6 +34,12 @@ func LoadJSON(conf interface{}, configPaths ...string) error {
 	return loadWithFunc(conf, nil, configPaths, json.Unmarshal)
 }
 
+// Load loads TOML files from `configPaths`.
+// and assigns decoded values into the `conf` value.
+func LoadTOML(conf interface{}, configPaths ...string) error {
+	return loadWithFunc(conf, nil, configPaths, toml.Unmarshal)
+}
+
 // LoadWithEnv loads YAML files with Env
 // replace {{ env "ENV" }} to os.Getenv("ENV")
 // if you set default value then {{ env "ENV" "default" }}
@@ -40,9 +47,22 @@ func LoadWithEnv(conf interface{}, configPaths ...string) error {
 	return loadWithFunc(conf, envReplacer, configPaths, yaml.Unmarshal)
 }
 
-// LoadWithEnv loads JSON files with Env
+// LoadWithEnvJSON loads JSON files with Env
 func LoadWithEnvJSON(conf interface{}, configPaths ...string) error {
 	return loadWithFunc(conf, envReplacer, configPaths, json.Unmarshal)
+}
+
+// LoadWithEnvTOML loads TOML files with Env
+func LoadWithEnvTOML(conf interface{}, configPaths ...string) error {
+	return loadWithFunc(conf, envReplacer, configPaths, toml.Unmarshal)
+}
+
+// Marshal serializes the value provided into a YAML document.
+var Marshal = yaml.Marshal
+
+// MarshalJSON returns the JSON encoding of v with indent by 2 white spaces.
+func MarshalJSON(v interface{}) ([]byte, error) {
+	return json.MarshalIndent(v, "", "  ")
 }
 
 func loadWithFunc(conf interface{}, custom customFunc, configPaths []string, unmarshal unmarshaler) error {
@@ -63,11 +83,11 @@ func loadConfig(configPath string, conf interface{}, custom customFunc, unmarsha
 	if custom != nil {
 		data, err = custom(data)
 		if err != nil {
-			return errors.Wrapf(err, "%s yaml custom failed", configPath)
+			return errors.Wrapf(err, "%s custom failed", configPath)
 		}
 	}
 	if err := unmarshal(data, conf); err != nil {
-		return errors.Wrapf(err, "%s yaml parse failed", configPath)
+		return errors.Wrapf(err, "%s parse failed", configPath)
 	}
 	return nil
 }

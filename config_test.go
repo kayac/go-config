@@ -308,3 +308,34 @@ func TestLoadJSON(t *testing.T) {
 		t.Errorf("bar expected baz got %s", c["bar"])
 	}
 }
+
+func TestLoadTOML(t *testing.T) {
+	a, err := genConfigFile("a.toml", `
+foo = "bar"
+env_foo = '{{ env "FOO" }}'
+`)
+	if err != nil {
+		t.Error(err)
+	}
+	b, err := genConfigFile("b.toml", `
+bar = "baz"
+`)
+	if err != nil {
+		t.Error(err)
+	}
+	os.Setenv("FOO", "BOO")
+	c := make(map[string]string)
+	err = config.LoadWithEnvTOML(&c, a, b)
+	if err != nil {
+		t.Error(err)
+	}
+	if c["foo"] != "bar" {
+		t.Errorf("foo expected bar got %s", c["foo"])
+	}
+	if c["env_foo"] != "BOO" {
+		t.Errorf("env_foo expected BOO got %s", c["env_foo"])
+	}
+	if c["bar"] != "baz" {
+		t.Errorf("bar expected baz got %s", c["bar"])
+	}
+}
