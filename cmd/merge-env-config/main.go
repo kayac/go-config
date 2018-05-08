@@ -8,6 +8,8 @@ import (
 	config "github.com/kayac/go-config"
 )
 
+var Version = "current"
+
 type Loader func(interface{}, ...string) error
 
 type Marshaler func(interface{}) ([]byte, error)
@@ -17,10 +19,17 @@ func main() {
 }
 
 func _main() int {
-	var isJSON bool
+	var isJSON, showVersion bool
 
 	flag.BoolVar(&isJSON, "json", false, "file(s) is JSON")
+	flag.BoolVar(&showVersion, "v", false, "show version number")
+	flag.BoolVar(&showVersion, "version", false, "show version number")
 	flag.Parse()
+
+	if showVersion {
+		fmt.Println("merge-env-config ", Version)
+		return 0
+	}
 
 	args := flag.Args()
 
