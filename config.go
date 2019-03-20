@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"text/template"
 
 	"github.com/BurntSushi/toml"
@@ -69,6 +70,9 @@ func loadWithFunc(conf interface{}, custom customFunc, configPaths []string, unm
 	for _, configPath := range configPaths {
 		err := loadConfig(configPath, conf, custom, unmarshal)
 		if err != nil {
+			if strings.Index(err.Error(), "must_env: environment variable") != -1 {
+				panic(err)
+			}
 			return err
 		}
 	}
