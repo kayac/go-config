@@ -1,0 +1,10 @@
+sudo: false
+language: go
+
+go:
+  - 1.11.5
+  - 1.12
+  - tip
+
+install:
+  - go test -v ./...
