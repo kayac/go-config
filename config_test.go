@@ -250,6 +250,23 @@ domain: '{{ must_env "MUST_DOMAIN_PANIC" }}'
 	config.LoadWithEnv(c, f)
 }
 
+func TestLoadMustEnvPanicBytes(t *testing.T) {
+	src := []byte(`## must.yml
+domain: '{{ must_env "MUST_DOMAIN_PANIC" }}'
+`)
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("must_env must raise panic")
+		} else {
+			t.Logf("must_env raise panic:%s", r)
+		}
+	}()
+
+	c := &Conf{}
+	err := config.LoadWithEnvBytes(c, src)
+	t.Log(err)
+}
+
 func TestLoadMustEnv(t *testing.T) {
 	f, err := genConfigFile("must.yml", `## must.yml
 domain: '{{ must_env "MUST_DOMAIN" }}'
@@ -271,6 +288,30 @@ domain: '{{ must_env "MUST_DOMAIN" }}'
 	os.Setenv("MUST_DOMAIN", "")
 	c2 := &Conf{}
 	if err := config.LoadWithEnv(c2, f); err != nil {
+		t.Error(err)
+	}
+	if c2.Domain != "" {
+		t.Errorf("domain expected \"\" got %s", c2.Domain)
+	}
+}
+
+func TestLoadMustEnvBytes(t *testing.T) {
+	src := []byte(`## must.yml
+domain: '{{ must_env "MUST_DOMAIN" }}'
+`)
+	mustDomain := "must.example.com"
+	os.Setenv("MUST_DOMAIN", mustDomain)
+	c := &Conf{}
+	if err := config.LoadWithEnvBytes(c, src); err != nil {
+		t.Error(err)
+	}
+	if c.Domain != mustDomain {
+		t.Errorf("domain expected %s got %s", mustDomain, c.Domain)
+	}
+
+	os.Setenv("MUST_DOMAIN", "")
+	c2 := &Conf{}
+	if err := config.LoadWithEnvBytes(c2, src); err != nil {
 		t.Error(err)
 	}
 	if c2.Domain != "" {
