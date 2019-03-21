@@ -26,36 +26,36 @@ type unmarshaler func([]byte, interface{}) error
 // Load loads YAML files from `configPaths`.
 // and assigns decoded values into the `conf` value.
 func Load(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, nil, configPaths, yaml.Unmarshal)
+	return loadWithFunc(conf, configPaths, nil, yaml.Unmarshal)
 }
 
 // Load loads JSON files from `configPaths`.
 // and assigns decoded values into the `conf` value.
 func LoadJSON(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, nil, configPaths, json.Unmarshal)
+	return loadWithFunc(conf, configPaths, nil, json.Unmarshal)
 }
 
 // Load loads TOML files from `configPaths`.
 // and assigns decoded values into the `conf` value.
 func LoadTOML(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, nil, configPaths, toml.Unmarshal)
+	return loadWithFunc(conf, configPaths, nil, toml.Unmarshal)
 }
 
 // LoadWithEnv loads YAML files with Env
 // replace {{ env "ENV" }} to os.Getenv("ENV")
 // if you set default value then {{ env "ENV" "default" }}
 func LoadWithEnv(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, envReplacer, configPaths, yaml.Unmarshal)
+	return loadWithFunc(conf, configPaths, envReplacer, yaml.Unmarshal)
 }
 
 // LoadWithEnvJSON loads JSON files with Env
 func LoadWithEnvJSON(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, envReplacer, configPaths, json.Unmarshal)
+	return loadWithFunc(conf, configPaths, envReplacer, json.Unmarshal)
 }
 
 // LoadWithEnvTOML loads TOML files with Env
 func LoadWithEnvTOML(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, envReplacer, configPaths, toml.Unmarshal)
+	return loadWithFunc(conf, configPaths, envReplacer, toml.Unmarshal)
 }
 
 // Marshal serializes the value provided into a YAML document.
@@ -66,9 +66,9 @@ func MarshalJSON(v interface{}) ([]byte, error) {
 	return json.MarshalIndent(v, "", "  ")
 }
 
-func loadWithFunc(conf interface{}, custom customFunc, configPaths []string, unmarshal unmarshaler) error {
+func loadWithFunc(conf interface{}, configPaths []string, custom customFunc, unmarshal unmarshaler) error {
 	for _, configPath := range configPaths {
-		err := loadConfig(configPath, conf, custom, unmarshal)
+		err := loadConfig(conf, configPath, custom, unmarshal)
 		if err != nil {
 			// Go 1.12 text/template catches a panic raised in user-defined function.
 			// https://golang.org/doc/go1.12#text/template
@@ -81,7 +81,7 @@ func loadWithFunc(conf interface{}, custom customFunc, configPaths []string, unm
 	return nil
 }
 
-func loadConfig(configPath string, conf interface{}, custom customFunc, unmarshal unmarshaler) error {
+func loadConfig(conf interface{}, configPath string, custom customFunc, unmarshal unmarshaler) error {
 	data, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		return errors.Wrapf(err, "%s read failed", configPath)
