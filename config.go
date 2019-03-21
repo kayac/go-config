@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"text/template"
 
 	"github.com/BurntSushi/toml"
@@ -69,6 +70,11 @@ func loadWithFunc(conf interface{}, custom customFunc, configPaths []string, unm
 	for _, configPath := range configPaths {
 		err := loadConfig(configPath, conf, custom, unmarshal)
 		if err != nil {
+			// Go 1.12 text/template catches a panic raised in user-defined function.
+			// https://golang.org/doc/go1.12#text/template
+			if strings.Index(err.Error(), "must_env: environment variable") != -1 {
+				panic(err)
+			}
 			return err
 		}
 	}

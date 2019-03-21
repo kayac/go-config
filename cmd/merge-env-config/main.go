@@ -68,7 +68,6 @@ func _main() int {
 func printUsage() {
 	fmt.Fprintln(os.Stderr, `Usage of merge-env-config:
 
-  merge-env-config [-json] config1.yaml [config2.yaml ...]
-`)
+  merge-env-config [-json] config1.yaml [config2.yaml ...]`)
 	flag.PrintDefaults()
 }
