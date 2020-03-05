@@ -136,6 +136,11 @@ func loadConfigBytes(conf interface{}, data []byte, custom customFunc, unmarshal
 	return nil
 }
 
+// Delims sets the action delimiters to the specified strings.
+func Delims(left, right string) {
+	envRepTpl.Delims(left, right)
+}
+
 var envRepTpl *template.Template
 
 func initEnvReplacer() {
