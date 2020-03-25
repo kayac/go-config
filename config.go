@@ -141,6 +141,12 @@ func Delims(left, right string) {
 	DefaultLoader.Delims(left, right)
 }
 
+// Funcs adds the elements of the argument map.
+// Caution: global settings are overwritten. can't go back.
+func Funcs(funcMap template.FuncMap) {
+	DefaultLoader.Funcs(funcMap)
+}
+
 var DefaultLoader *Loader
 
 type Loader struct {
@@ -252,4 +258,9 @@ func (l *Loader) LoadWithEnvTOMLBytes(conf interface{}, src []byte) error {
 // Delims sets the action delimiters to the specified strings.
 func (l *Loader) Delims(left, right string) {
 	l.envRepTpl.Delims(left, right)
+}
+
+// Funcs adds the elements of the argument map.
+func (l *Loader) Funcs(funcMap template.FuncMap) {
+	l.envRepTpl.Funcs(funcMap)
 }
