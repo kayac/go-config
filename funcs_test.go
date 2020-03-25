@@ -11,7 +11,8 @@ import (
 
 func TestFuncs(t *testing.T) {
 	os.Setenv("PREFIX", "test_")
-	config.Funcs(template.FuncMap{
+	loader := config.New()
+	loader.Funcs(template.FuncMap{
 		"word": func(keys ...string) string {
 			return strings.Join(keys, "_")
 		},
@@ -19,7 +20,7 @@ func TestFuncs(t *testing.T) {
 
 	src := []byte(`foo: '{{ env "PREFIX" }}{{ word "foo" "bar" }}'`)
 	c := make(map[string]string)
-	if err := config.LoadWithEnvBytes(&c, src); err != nil {
+	if err := loader.LoadWithEnvBytes(&c, src); err != nil {
 		t.Error(err)
 	}
 	if c["foo"] != "test_foo_bar" {
