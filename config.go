@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/BurntSushi/toml"
@@ -15,9 +16,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func init() {
-	initEnvReplacer()
-}
+var defaultCustomizer = &customizer{}
 
 type customFunc func(data []byte) ([]byte, error)
 
@@ -60,32 +59,32 @@ func LoadTOMLBytes(conf interface{}, src []byte) error {
 // replace {{ env "ENV" }} to os.Getenv("ENV")
 // if you set default value then {{ env "ENV" "default" }}
 func LoadWithEnv(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, configPaths, envReplacer, yaml.Unmarshal)
+	return loadWithFunc(conf, configPaths, defaultCustomizer.Customize, yaml.Unmarshal)
 }
 
 // LoadWithEnvJSON loads JSON files with Env
 func LoadWithEnvJSON(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, configPaths, envReplacer, json.Unmarshal)
+	return loadWithFunc(conf, configPaths, defaultCustomizer.Customize, json.Unmarshal)
 }
 
 // LoadWithEnvTOML loads TOML files with Env
 func LoadWithEnvTOML(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, configPaths, envReplacer, toml.Unmarshal)
+	return loadWithFunc(conf, configPaths, defaultCustomizer.Customize, toml.Unmarshal)
 }
 
 // LoadWithEnvBytes loads YAML bytes with Env
 func LoadWithEnvBytes(conf interface{}, src []byte) error {
-	return loadConfigBytes(conf, src, envReplacer, yaml.Unmarshal)
+	return loadConfigBytes(conf, src, defaultCustomizer.Customize, yaml.Unmarshal)
 }
 
 // LoadWithEnvJSONBytes loads JSON bytes with Env
 func LoadWithEnvJSONBytes(conf interface{}, src []byte) error {
-	return loadConfigBytes(conf, src, envReplacer, json.Unmarshal)
+	return loadConfigBytes(conf, src, defaultCustomizer.Customize, json.Unmarshal)
 }
 
 // LoadWithEnvTOMLBytes loads TOML bytes with Env
 func LoadWithEnvTOMLBytes(conf interface{}, src []byte) error {
-	return loadConfigBytes(conf, src, envReplacer, toml.Unmarshal)
+	return loadConfigBytes(conf, src, defaultCustomizer.Customize, toml.Unmarshal)
 }
 
 // Marshal serializes the value provided into a YAML document.
@@ -138,13 +137,38 @@ func loadConfigBytes(conf interface{}, data []byte, custom customFunc, unmarshal
 
 // Delims sets the action delimiters to the specified strings.
 func Delims(left, right string) {
-	envRepTpl.Delims(left, right)
+	defaultCustomizer.Delims(left, right)
 }
 
-var envRepTpl *template.Template
+type Replacer interface {
+	Keyword() string
+	Replace(...string) string
+}
 
-func initEnvReplacer() {
-	envRepTpl = template.New("conf").Funcs(template.FuncMap{
+type customizer struct {
+	mu          sync.Mutex
+	left, right string
+	replacers   []Replacer
+	repTpl      *template.Template
+}
+
+func (c *customizer) clearRepTpl() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.repTpl = nil
+}
+
+func (c *customizer) getRepTpl() *template.Template {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.repTpl == nil {
+		c.buildRepTpl()
+	}
+	return c.repTpl
+}
+
+func (c *customizer) buildRepTpl() {
+	funcMap := template.FuncMap{
 		"env": func(keys ...string) string {
 			v := ""
 			for _, k := range keys {
@@ -162,11 +186,29 @@ func initEnvReplacer() {
 			}
 			panic(fmt.Sprintf("environment variable %s is not defined", key))
 		},
-	})
+	}
+	for _, replacer := range c.replacers {
+		funcMap[replacer.Keyword()] = replacer.Replace
+	}
+	c.repTpl = template.New("conf").Funcs(funcMap)
+	if c.left != "" || c.right != "" {
+		c.repTpl.Delims(c.left, c.right)
+	}
 }
 
-func envReplacer(data []byte) ([]byte, error) {
-	t, err := envRepTpl.Parse(string(data))
+func (c *customizer) Replacers(replacers ...Replacer) {
+	c.replacers = replacers
+	c.clearRepTpl()
+}
+
+func (c *customizer) Delims(left, right string) {
+	c.left = left
+	c.right = right
+	c.clearRepTpl()
+}
+
+func (c *customizer) Customize(data []byte) ([]byte, error) {
+	t, err := c.getRepTpl().Parse(string(data))
 	if err != nil {
 		return nil, errors.Wrap(err, "config parse by template failed")
 	}
