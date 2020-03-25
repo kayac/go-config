@@ -140,6 +140,11 @@ func Delims(left, right string) {
 	defaultCustomizer.Delims(left, right)
 }
 
+// AppendReplacers sets the customized replacement criteria.
+func Replacers(replacers ...Replacer) {
+	defaultCustomizer.Replacers(replacers...)
+}
+
 type Replacer interface {
 	Keyword() string
 	Replace(...string) string
