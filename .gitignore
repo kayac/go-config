@@ -14,4 +14,4 @@
 .glide/
 
 *~
-pkg/
+dist/
