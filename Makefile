@@ -13,3 +13,6 @@ packages:
 clean:
 	rm -f cmd/merge-env-config/merge-env-config
 	rm -f pkg/*
+
+test:
+	go test -v -race ./...
