@@ -21,12 +21,11 @@ jobs:
 
     - name: setup tools
       run: |
-        mkdir ~/bin
-        curl -sL https://github.com/Songmu/goxz/releases/download/v0.4.1/goxz_v0.4.1_linux_amd64.tar.gz | tar zxvf - && install goxz_v0.4.1_linux_amd64/goxz ~/bin/
-        curl -sL https://github.com/tcnksm/ghr/releases/download/v0.13.0/ghr_v0.13.0_linux_amd64.tar.gz | tar zxvf - && install ghr_v0.13.0_linux_amd64/ghr ~/bin/
+        go get -v github.com/mitchellh/gox@v1.0.1
+        curl -sL https://github.com/tcnksm/ghr/releases/download/v0.13.0/ghr_v0.13.0_linux_amd64.tar.gz | tar zxvf - && install ghr_v0.13.0_linux_amd64/ghr ~/go/bin/
 
     - name: dist
-      run: PATH=~/bin:$PATH make dist
+      run: PATH=~/go/bin:$PATH make dist
       env:
         CGO_ENABLED: 0
 
