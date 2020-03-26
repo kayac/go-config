@@ -16,7 +16,7 @@ import (
 )
 
 func init() {
-	DefaultLoader = New()
+	defaultLoader = New()
 }
 
 type customFunc func(data []byte) ([]byte, error)
@@ -26,66 +26,66 @@ type unmarshaler func([]byte, interface{}) error
 // Load loads YAML files from `configPaths`.
 // and assigns decoded values into the `conf` value.
 func Load(conf interface{}, configPaths ...string) error {
-	return DefaultLoader.Load(conf, configPaths...)
+	return defaultLoader.Load(conf, configPaths...)
 }
 
 // Load loads JSON files from `configPaths`.
 // and assigns decoded values into the `conf` value.
 func LoadJSON(conf interface{}, configPaths ...string) error {
-	return DefaultLoader.LoadJSON(conf, configPaths...)
+	return defaultLoader.LoadJSON(conf, configPaths...)
 }
 
 // Load loads TOML files from `configPaths`.
 // and assigns decoded values into the `conf` value.
 func LoadTOML(conf interface{}, configPaths ...string) error {
-	return DefaultLoader.LoadTOML(conf, configPaths...)
+	return defaultLoader.LoadTOML(conf, configPaths...)
 }
 
 // LoadBytes loads YAML bytes
 func LoadBytes(conf interface{}, src []byte) error {
-	return DefaultLoader.LoadBytes(conf, src)
+	return defaultLoader.LoadBytes(conf, src)
 }
 
 // LoadJSONBytes loads JSON bytes
 func LoadJSONBytes(conf interface{}, src []byte) error {
-	return DefaultLoader.LoadJSONBytes(conf, src)
+	return defaultLoader.LoadJSONBytes(conf, src)
 }
 
 // LoadTOMLBytes loads TOML bytes
 func LoadTOMLBytes(conf interface{}, src []byte) error {
-	return DefaultLoader.LoadTOMLBytes(conf, src)
+	return defaultLoader.LoadTOMLBytes(conf, src)
 }
 
 // LoadWithEnv loads YAML files with Env
 // replace {{ env "ENV" }} to os.Getenv("ENV")
 // if you set default value then {{ env "ENV" "default" }}
 func LoadWithEnv(conf interface{}, configPaths ...string) error {
-	return DefaultLoader.LoadWithEnv(conf, configPaths...)
+	return defaultLoader.LoadWithEnv(conf, configPaths...)
 }
 
 // LoadWithEnvJSON loads JSON files with Env
 func LoadWithEnvJSON(conf interface{}, configPaths ...string) error {
-	return DefaultLoader.LoadWithEnvJSON(conf, configPaths...)
+	return defaultLoader.LoadWithEnvJSON(conf, configPaths...)
 }
 
 // LoadWithEnvTOML loads TOML files with Env
 func LoadWithEnvTOML(conf interface{}, configPaths ...string) error {
-	return DefaultLoader.LoadWithEnvTOML(conf, configPaths...)
+	return defaultLoader.LoadWithEnvTOML(conf, configPaths...)
 }
 
 // LoadWithEnvBytes loads YAML bytes with Env
 func LoadWithEnvBytes(conf interface{}, src []byte) error {
-	return DefaultLoader.LoadWithEnvBytes(conf, src)
+	return defaultLoader.LoadWithEnvBytes(conf, src)
 }
 
 // LoadWithEnvJSONBytes loads JSON bytes with Env
 func LoadWithEnvJSONBytes(conf interface{}, src []byte) error {
-	return DefaultLoader.LoadWithEnvJSONBytes(conf, src)
+	return defaultLoader.LoadWithEnvJSONBytes(conf, src)
 }
 
 // LoadWithEnvTOMLBytes loads TOML bytes with Env
 func LoadWithEnvTOMLBytes(conf interface{}, src []byte) error {
-	return DefaultLoader.LoadWithEnvTOMLBytes(conf, src)
+	return defaultLoader.LoadWithEnvTOMLBytes(conf, src)
 }
 
 // Marshal serializes the value provided into a YAML document.
@@ -138,16 +138,16 @@ func loadConfigBytes(conf interface{}, data []byte, custom customFunc, unmarshal
 
 // Delims sets the action delimiters to the specified strings.
 func Delims(left, right string) {
-	DefaultLoader.Delims(left, right)
+	defaultLoader.Delims(left, right)
 }
 
 // Funcs adds the elements of the argument map.
 // Caution: global settings are overwritten. can't go back.
 func Funcs(funcMap template.FuncMap) {
-	DefaultLoader.Funcs(funcMap)
+	defaultLoader.Funcs(funcMap)
 }
 
-var DefaultLoader *Loader
+var defaultLoader *Loader
 
 type Loader struct {
 	envRepTpl *template.Template
