@@ -11,8 +11,17 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	defaultFuncName = "tfstate"
+)
+
 // Load tfstate based on URL and provide tamplate.FuncMap
 func Load(stateURL string) (template.FuncMap, error) {
+	return LoadWithName(defaultFuncName, stateURL)
+}
+
+// LoadWithName provides tamplate.FuncMap. can lockup values from tfstate.
+func LoadWithName(name string, stateURL string) (template.FuncMap, error) {
 	u, err := url.Parse(stateURL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateURL)
@@ -27,7 +36,7 @@ func Load(stateURL string) (template.FuncMap, error) {
 		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateURL)
 	}
 	return template.FuncMap{
-		"tfstate": func(addrs string) string {
+		name: func(addrs string) string {
 			if strings.Contains(addrs, "'") {
 				addrs = strings.ReplaceAll(addrs, "'", "\"")
 			}
@@ -45,7 +54,12 @@ func Load(stateURL string) (template.FuncMap, error) {
 
 // MustLoad is similar to Load, but panics if it cannot get and parse tfstate. Simplifies registration with config.Loader
 func MustLoad(stateURL string) template.FuncMap {
-	funcMap, err := Load(stateURL)
+	return MustLoadWithName(defaultFuncName, stateURL)
+}
+
+// MustLoadWithName is similar to LoadWithName, but panics if it cannot get and parse tfstate. Simplifies registration with config.Loader
+func MustLoadWithName(name string, stateURL string) template.FuncMap {
+	funcMap, err := LoadWithName(name, stateURL)
 	if err != nil {
 		panic(err)
 	}

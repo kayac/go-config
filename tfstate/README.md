@@ -9,6 +9,7 @@ for example:
 config.yaml has the following content
 ```yaml
 aws_account_id: {{ tfstate "data.aws_caller_identity.current.account_id" }}
+remote_aws_account_id: {{ s3tfstate "data.aws_caller_identity.current.account_id" }}
 ```
 
 The code to load this configuration is as follows:
@@ -25,6 +26,7 @@ import (
 func main() {
 	loader := config.New()
 	loader.Funcs(tfstate.MustLoad("file://./testdata/terraform.tfstate"))
+	loader.Funcs(tfstate.MustLoadWithName("s3tfstate", "s3://bucket.example.com/terraform.tfstate"))
 	var c map[string]string
 	if err := loader.LoadWithEnv(&c, "./config.yaml"); err != nil {
 		fmt.Println(err)
