@@ -37,3 +37,7 @@ func main() {
 ```
 
 Load tfstate URL support s3, gs, http/https, fiile schemes
+
+## Note
+
+./testdata/terraform.tfstate is the same data as testdata used in https://github.com/fujiwara/tfstate-lookup
