@@ -2,12 +2,10 @@ package tfstate
 
 import (
 	"fmt"
-	"net/url"
 	"strings"
 	"text/template"
 
 	"github.com/fujiwara/tfstate-lookup/tfstate"
-	"github.com/mashiike/urlio"
 	"github.com/pkg/errors"
 )
 
@@ -22,16 +20,7 @@ func Load(stateURL string) (template.FuncMap, error) {
 
 // LoadWithName provides tamplate.FuncMap. can lockup values from tfstate.
 func LoadWithName(name string, stateURL string) (template.FuncMap, error) {
-	u, err := url.Parse(stateURL)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateURL)
-	}
-	reader, err := urlio.NewReader(u)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateURL)
-	}
-	defer reader.Close()
-	state, err := tfstate.Read(reader)
+	state, err := tfstate.ReadFile(stateURL)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateURL)
 	}

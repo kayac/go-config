@@ -9,7 +9,7 @@ import (
 
 func ExampleMustLoad() {
 	loader := config.New()
-	loader.Funcs(tfstate.MustLoad("file://./testdata/terraform.tfstate"))
+	loader.Funcs(tfstate.MustLoad("./testdata/terraform.tfstate"))
 	var c map[string]string
 	if err := loader.LoadWithEnv(&c, "./testdata/config.yaml"); err != nil {
 		fmt.Println(err)

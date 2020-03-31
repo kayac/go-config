@@ -25,7 +25,7 @@ import (
 
 func main() {
 	loader := config.New()
-	loader.Funcs(tfstate.MustLoad("file://./testdata/terraform.tfstate"))
+	loader.Funcs(tfstate.MustLoad("./testdata/terraform.tfstate"))
 	loader.Funcs(tfstate.MustLoadWithName("s3tfstate", "s3://bucket.example.com/terraform.tfstate"))
 	var c map[string]string
 	if err := loader.LoadWithEnv(&c, "./config.yaml"); err != nil {
@@ -36,7 +36,7 @@ func main() {
 }
 ```
 
-Load tfstate URL support s3, gs, http/https, fiile schemes
+Load tfstate URL support s3, fiile schemes
 
 ## Note
 
