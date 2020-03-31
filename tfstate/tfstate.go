@@ -14,15 +14,15 @@ const (
 )
 
 // Load tfstate based on URL and provide tamplate.FuncMap
-func Load(stateURL string) (template.FuncMap, error) {
-	return LoadWithName(defaultFuncName, stateURL)
+func Load(stateFile string) (template.FuncMap, error) {
+	return LoadWithName(defaultFuncName, stateFile)
 }
 
 // LoadWithName provides tamplate.FuncMap. can lockup values from tfstate.
-func LoadWithName(name string, stateURL string) (template.FuncMap, error) {
-	state, err := tfstate.ReadFile(stateURL)
+func LoadWithName(name string, stateFile string) (template.FuncMap, error) {
+	state, err := tfstate.ReadFile(stateFile)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateURL)
+		return nil, errors.Wrapf(err, "failed to read tfstate: %s", stateFile)
 	}
 	return template.FuncMap{
 		name: func(addrs string) string {
@@ -31,7 +31,7 @@ func LoadWithName(name string, stateURL string) (template.FuncMap, error) {
 			}
 			attrs, err := state.Lookup(addrs)
 			if err != nil {
-				return ""
+				panic(fmt.Sprintf("failed to lookup %s in tfstate: %s", addrs, err))
 			}
 			if attrs.Value == nil {
 				panic(fmt.Sprintf("%s is not found in tfstate", addrs))
