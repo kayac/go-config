@@ -8,7 +8,6 @@ import (
 	"os"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/kayac/go-config"
 	"github.com/kayac/go-config/ecsmeta"
@@ -20,8 +19,6 @@ func TestNew(t *testing.T) {
 	os.Setenv("ECS_CONTAINER_METADATA_URI", server.URL)
 	loader := config.New()
 	loader.Data(ecsmeta.New(
-		ecsmeta.WithMaxRetries(1),
-		ecsmeta.WithDurationBetweenRetries(5*time.Millisecond),
 		ecsmeta.WithLogger(log.New(os.Stderr, "", log.LstdFlags)),
 	))
 

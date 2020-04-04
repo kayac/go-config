@@ -1,6 +1,7 @@
 package ecsmeta
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,25 +10,9 @@ import (
 	"time"
 
 	"github.com/kayac/go-config"
+	"github.com/lestrrat-go/backoff"
 	"github.com/pkg/errors"
 )
-
-type setting struct {
-	client                 *http.Client
-	endpoint               string
-	maxRetries             int
-	durationBetweenRetries time.Duration
-	logger                 *log.Logger
-}
-
-func (s *setting) Logf(format string, args ...interface{}) {
-	if s.logger == nil {
-		return
-	}
-	s.logger.Printf(format, args...)
-}
-
-type Option func(*setting)
 
 func New(opts ...Option) config.DataMap {
 	s := newSetting()
@@ -40,13 +25,14 @@ func New(opts ...Option) config.DataMap {
 }
 
 func getMetadata(s *setting) interface{} {
-	for i := 0; i < s.maxRetries+1; i++ {
+	b, cancel := s.Start(context.Background())
+	defer cancel()
+	for i := 1; backoff.Continue(b); i++ {
 		metadata, err := getMetadataOnce(s)
 		if err == nil {
 			return metadata
 		}
-		s.Logf("[%d/%d]: unable to get ecs metadata response: %v", i+1, s.maxRetries+1, err)
-		time.Sleep(s.durationBetweenRetries)
+		s.Logf("[%d]: unable to get ecs metadata response: %v", i, err)
 	}
 	panic("max retries count reached")
 }
@@ -68,17 +54,43 @@ func getMetadataOnce(s *setting) (interface{}, error) {
 	return metadata, nil
 }
 
+type Option func(*setting)
+
+type setting struct {
+	client   *http.Client
+	endpoint string
+	policy   backoff.Policy
+	logger   *log.Logger
+}
+
 func newSetting() *setting {
 	endpoint := os.Getenv("ECS_CONTAINER_METADATA_URI") + "/task" //for v3
 	if endpoint == "/task" {
 		endpoint = "http://169.254.170.2/v2/metadata" //for v2
 	}
 	return &setting{
-		endpoint:               endpoint,
-		client:                 http.DefaultClient,
-		maxRetries:             5,
-		durationBetweenRetries: time.Second,
+		endpoint: endpoint,
+		client:   http.DefaultClient,
 	}
+}
+
+func (s *setting) Logf(format string, args ...interface{}) {
+	if s.logger == nil {
+		return
+	}
+	s.logger.Printf(format, args...)
+}
+
+func (s *setting) Start(ctx context.Context) (backoff.Backoff, backoff.CancelFunc) {
+	if s.policy != nil {
+		return s.policy.Start(ctx)
+	}
+	defaultPolicy := backoff.NewExponential(
+		backoff.WithInterval(500*time.Millisecond),
+		backoff.WithJitterFactor(0.5),
+		backoff.WithMaxRetries(5),
+	)
+	return defaultPolicy.Start(ctx)
 }
 
 func WithEndpoint(endpoint string) Option {
@@ -93,15 +105,9 @@ func WithHTTPClient(client *http.Client) Option {
 	}
 }
 
-func WithMaxRetries(n int) Option {
+func WithRetryPolicy(policy backoff.Policy) Option {
 	return func(s *setting) {
-		s.maxRetries = n
-	}
-}
-
-func WithDurationBetweenRetries(d time.Duration) Option {
-	return func(s *setting) {
-		s.durationBetweenRetries = d
+		s.policy = policy
 	}
 }
 
