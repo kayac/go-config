@@ -23,6 +23,9 @@ type customFunc func(data []byte) ([]byte, error)
 
 type unmarshaler func([]byte, interface{}) error
 
+// DataMap is data map. data value can access on config as {{ .key }}
+type DataMap map[string]interface{}
+
 // Load loads YAML files from `configPaths`.
 // and assigns decoded values into the `conf` value.
 func Load(conf interface{}, configPaths ...string) error {
@@ -147,10 +150,16 @@ func Funcs(funcMap template.FuncMap) {
 	defaultLoader.Funcs(funcMap)
 }
 
+// Data adds the elements of the data for config replace data.
+func Data(dataMap DataMap) {
+	defaultLoader.Data(dataMap)
+}
+
 var defaultLoader *Loader
 
 type Loader struct {
 	envRepTpl *template.Template
+	data      DataMap
 }
 
 func New() *Loader {
@@ -175,6 +184,7 @@ func New() *Loader {
 	})
 	return &Loader{
 		envRepTpl: envRepTpl,
+		data:      make(DataMap, 0),
 	}
 }
 
@@ -184,7 +194,7 @@ func (l *Loader) envReplacer(data []byte) ([]byte, error) {
 		return nil, errors.Wrap(err, "config parse by template failed")
 	}
 	buf := &bytes.Buffer{}
-	if err = t.Execute(buf, nil); err != nil {
+	if err = t.Execute(buf, l.data); err != nil {
 		return nil, errors.Wrap(err, "template attach failed")
 	}
 	return buf.Bytes(), nil
@@ -263,4 +273,11 @@ func (l *Loader) Delims(left, right string) {
 // Funcs adds the elements of the argument map.
 func (l *Loader) Funcs(funcMap template.FuncMap) {
 	l.envRepTpl.Funcs(funcMap)
+}
+
+// Data adds the elements of the data map.
+func (l *Loader) Data(dataMap DataMap) {
+	for key, value := range dataMap {
+		l.data[key] = value
+	}
 }
