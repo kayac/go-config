@@ -8,32 +8,48 @@ import (
 	"os"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/kayac/go-config"
 	"github.com/kayac/go-config/ecsmeta"
+	"github.com/lestrrat-go/backoff"
 )
 
 func TestNew(t *testing.T) {
 	server := newTestServer()
 	defer server.Close()
+	opts := []ecsmeta.Option{
+		ecsmeta.WithLogger(log.New(os.Stderr, "", log.LstdFlags)),
+	}
 	os.Setenv("ECS_CONTAINER_METADATA_URI", server.URL+"/v3")
-	testNew(t, "v3", []string{"amazon/amazon-ecs-pause:0.1.0", "nrdlngr/nginx-curl"})
+	testNew(t, "v3", []string{"amazon/amazon-ecs-pause:0.1.0", "nrdlngr/nginx-curl"}, opts)
 	os.Setenv("ECS_CONTAINER_METADATA_URI", server.URL+"/v4")
-	testNew(t, "v4", []string{"mreferre/eksutils"})
-
+	testNew(t, "v4", []string{"mreferre/eksutils"}, opts)
+	os.Clearenv()
+	testNew(t, "none", []string{"none"}, opts)
+	os.Setenv("ECS_CONTAINER_METADATA_URI", server.URL+"/invalid")
+	opts = append(opts, ecsmeta.WithRetryPolicy(
+		backoff.NewConstant(
+			50*time.Millisecond,
+			backoff.WithMaxRetries(3),
+		),
+	))
+	testNew(t, "invalid", []string{"none"}, opts)
 }
 
-func testNew(t *testing.T, label string, expected []string) {
+func testNew(t *testing.T, label string, expected []string, opts []ecsmeta.Option) {
 	t.Run(label, func(t *testing.T) {
 		loader := config.New()
-		loader.Data(ecsmeta.New(
-			ecsmeta.WithLogger(log.New(os.Stderr, "", log.LstdFlags)),
-		))
+		loader.Data(ecsmeta.New(opts...))
 
 		src := []byte(`
 Images:
-  {{ range  $c := .ecsTaskMetadata.Containers }}
+  {{ with .ecsTaskMetadata }}
+  {{ range  $c := .Containers }}
   - {{ $c.Image }}
+  {{ end }}
+  {{ else }}
+  - none
   {{ end }}
 `)
 		c := make(map[string][]string)

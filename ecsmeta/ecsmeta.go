@@ -19,12 +19,18 @@ func New(opts ...Option) config.DataMap {
 	for _, opt := range opts {
 		opt(s)
 	}
-	return config.DataMap{
-		"ecsTaskMetadata": getMetadata(s),
+	ret := config.DataMap{}
+	if meta := getMetadata(s); meta != nil {
+		ret["ecsTaskMetadata"] = meta
 	}
+	return ret
 }
 
 func getMetadata(s *setting) interface{} {
+	if s.endpoint == "" {
+		return nil
+	}
+
 	b, cancel := s.Start(context.Background())
 	defer cancel()
 	for i := 1; backoff.Continue(b); i++ {
@@ -34,7 +40,8 @@ func getMetadata(s *setting) interface{} {
 		}
 		s.Logf("[%d]: unable to get ecs metadata response: %v", i, err)
 	}
-	panic("max retries count reached")
+	s.Logf("max retries count reached")
+	return nil
 }
 
 func getMetadataOnce(s *setting) (interface{}, error) {
