@@ -17,6 +17,8 @@ github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239/go.mod h1:Gdwt2ce0
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
 github.com/fujiwara/tfstate-lookup v0.0.5 h1:9i/GKMWjCtJ//VajepxJnmhcfHm8JA5241buNHy6+bg=
 github.com/fujiwara/tfstate-lookup v0.0.5/go.mod h1:kHNMin77QofrRHYyIp5dagce0RjvoQVjoOIxA9ASwNM=
+github.com/fujiwara/tfstate-lookup v0.0.6 h1:GmBB8Rp4zzBP2uGxw053eXjAmi4j5zCVIyYak3ECeFc=
+github.com/fujiwara/tfstate-lookup v0.0.6/go.mod h1:kHNMin77QofrRHYyIp5dagce0RjvoQVjoOIxA9ASwNM=
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
 github.com/google/go-cmp v0.3.1 h1:Xye71clBPdm5HgqGwUkwhbynsUJZhDbS20FvLhQ2izg=
 github.com/google/go-cmp v0.3.1/go.mod h1:8QqcDgzrUqlUb/G2PQTWiueGozuR1884gddMywk6iLU=
