@@ -64,9 +64,12 @@ type setting struct {
 }
 
 func newSetting() *setting {
-	endpoint := os.Getenv("ECS_CONTAINER_METADATA_URI") + "/task" //for v3
-	if endpoint == "/task" {
-		endpoint = "http://169.254.170.2/v2/metadata" //for v2
+	var endpoint string
+	if e := os.Getenv("ECS_CONTAINER_METADATA_URI"); e != "" {
+		endpoint = e + "/task"
+	}
+	if e := os.Getenv("ECS_CONTAINER_METADATA_URI_V4"); e != "" {
+		endpoint = e + "/task"
 	}
 	return &setting{
 		endpoint: endpoint,
@@ -96,6 +99,14 @@ func (s *setting) Start(ctx context.Context) (backoff.Backoff, backoff.CancelFun
 func WithEndpoint(endpoint string) Option {
 	return func(s *setting) {
 		s.endpoint = endpoint
+	}
+}
+
+func WithEnableV2() Option {
+	return func(s *setting) {
+		if s.endpoint == "" {
+			s.endpoint = "http://169.254.170.2/v2/metadata" //for v2
+		}
 	}
 }
 
