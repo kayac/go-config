@@ -172,6 +172,11 @@ func New() *Loader {
 			}
 			panic(fmt.Sprintf("environment variable %s is not defined", key))
 		},
+		"json_encode": func(s string) string {
+			s = strings.ReplaceAll(s, `\`, `\\`)
+			s = strings.ReplaceAll(s, `"`, `\"`)
+			return s
+		},
 	})
 	return &Loader{
 		envRepTpl: envRepTpl,
