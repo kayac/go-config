@@ -16,7 +16,7 @@ var testsJSON = []string{
 }
 
 var templateTestJSON = []byte(`{
-	"json": "{{ env "JSON" | json_encode }}"
+	"json": "{{ env "JSON" | json_escape }}"
 }`)
 
 func TestJSONEncode(t *testing.T) {
