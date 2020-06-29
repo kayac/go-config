@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/kayac/go-config"
 )
 
@@ -13,6 +14,9 @@ var testsJSON = []string{
 	`{"foo":"b\nar"}`,
 	`{"foo":"b\"ar"}`,
 	`{"foo":"b\u1234ar\t"}`,
+	`{"foo":"\u2029"}`,
+	`["A", "B", "C"]`,
+	`"string"`,
 }
 
 var templateTestJSON = []byte(`{
@@ -24,7 +28,7 @@ func TestJSONEncode(t *testing.T) {
 	for _, s := range testsJSON {
 		os.Setenv("JSON", s)
 
-		before := make(map[string]string, 0)
+		var before interface{}
 		if err := json.Unmarshal([]byte(s), &before); err != nil {
 			t.Error("failed to unmarshal before", err)
 		}
@@ -33,12 +37,12 @@ func TestJSONEncode(t *testing.T) {
 			t.Error("failed to LoadWithEnvJSONBytes", err)
 		}
 		t.Logf("%#v", conf)
-		after := make(map[string]string, 0)
+		var after interface{}
 		if err := json.Unmarshal([]byte(conf["json"]), &after); err != nil {
 			t.Error("failed to unmarshal after", err)
 		}
-		if before["foo"] != after["foo"] {
-			t.Errorf("%s != %s", before["foo"], after["foo"])
+		if cmp.Diff(before, after) != "" {
+			t.Errorf("%v != %v", before, after)
 		}
 	}
 }

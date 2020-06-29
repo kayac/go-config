@@ -173,9 +173,8 @@ func New() *Loader {
 			panic(fmt.Sprintf("environment variable %s is not defined", key))
 		},
 		"json_escape": func(s string) string {
-			s = strings.ReplaceAll(s, `\`, `\\`)
-			s = strings.ReplaceAll(s, `"`, `\"`)
-			return s
+			b, _ := json.Marshal(s)        // marshal as JSON string
+			return string(b[1 : len(b)-1]) // remove " on head and tail
 		},
 	})
 	return &Loader{
