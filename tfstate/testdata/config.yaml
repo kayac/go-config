@@ -1,2 +1,0 @@
-aws_account_id: {{ tfstate "data.aws_caller_identity.current.account_id" }}
-log_group: {{ tfstate "module.logs.aws_cloudwatch_log_group.main['app'].id" }}
