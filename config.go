@@ -151,6 +151,8 @@ var defaultLoader *Loader
 
 // Loader represents config loader.
 type Loader struct {
+	Data interface{}
+
 	tmpl *template.Template
 }
 
@@ -192,7 +194,7 @@ func (l *Loader) replacer(data []byte) ([]byte, error) {
 		return nil, errors.Wrap(err, "config parse by template failed")
 	}
 	buf := &bytes.Buffer{}
-	if err = t.Execute(buf, nil); err != nil {
+	if err = t.Execute(buf, l.Data); err != nil {
 		return nil, errors.Wrap(err, "template attach failed")
 	}
 	return buf.Bytes(), nil
