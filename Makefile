@@ -18,7 +18,6 @@ clean:
 
 test:
 	go test -v -race ./...
-	make -C tfstate test
 
 release:
 	ghr -u kayac -r go-config -n "$(GIT_VER)" $(GIT_VER) dist/
