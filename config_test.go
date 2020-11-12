@@ -383,7 +383,7 @@ bar = "baz"
 
 func TestLoadEmpty(t *testing.T) {
 	conf := make(map[string]string)
-	if err := config.Load(&conf, "tests/foo.yaml"); err != nil {
+	if err := config.LoadWithEnv(&conf, "tests/foo.yaml"); err != nil {
 		t.Error(err)
 	}
 	if conf["foo"] != "bar" {
@@ -391,7 +391,7 @@ func TestLoadEmpty(t *testing.T) {
 	}
 
 	newConf := make(map[string]string)
-	if err := config.Load(&newConf, "tests/empty.yaml"); err != nil {
+	if err := config.LoadWithEnv(&newConf, "tests/empty.yaml"); err != nil {
 		t.Error(err)
 	}
 	if v, exists := newConf["foo"]; exists {
