@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/BurntSushi/toml"
@@ -153,6 +154,7 @@ var defaultLoader *Loader
 type Loader struct {
 	Data interface{}
 
+	mu         sync.Mutex
 	leftDelim  string
 	rightDelim string
 	funcMap    template.FuncMap
@@ -193,6 +195,8 @@ func New() *Loader {
 }
 
 func (l *Loader) newTemplate() *template.Template {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	tmpl := template.New("conf").Funcs(l.funcMap)
 	if l.leftDelim != "" && l.rightDelim != "" {
 		tmpl.Delims(l.leftDelim, l.rightDelim)
@@ -279,12 +283,16 @@ func (l *Loader) LoadWithEnvTOMLBytes(conf interface{}, src []byte) error {
 
 // Delims sets the action delimiters to the specified strings.
 func (l *Loader) Delims(left, right string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	l.leftDelim = left
 	l.rightDelim = right
 }
 
 // Funcs adds the elements of the argument map.
 func (l *Loader) Funcs(funcMap template.FuncMap) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 	for name, fn := range funcMap {
 		l.funcMap[name] = fn
 	}
