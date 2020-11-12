@@ -380,3 +380,21 @@ bar = "baz"
 		t.Errorf("bar expected baz got %s", c["bar"])
 	}
 }
+
+func TestLoadEmpty(t *testing.T) {
+	conf := make(map[string]string)
+	if err := config.Load(&conf, "tests/foo.yaml"); err != nil {
+		t.Error(err)
+	}
+	if conf["foo"] != "bar" {
+		t.Errorf("unexpected foo: %s", conf["foo"])
+	}
+
+	newConf := make(map[string]string)
+	if err := config.Load(&newConf, "tests/empty.yaml"); err != nil {
+		t.Error(err)
+	}
+	if v, exists := newConf["foo"]; exists {
+		t.Errorf("unexpected foo must be not exist but got %s", v)
+	}
+}
