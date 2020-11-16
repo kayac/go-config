@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/BurntSushi/toml"
@@ -153,7 +154,10 @@ var defaultLoader *Loader
 type Loader struct {
 	Data interface{}
 
-	tmpl *template.Template
+	mu         sync.Mutex
+	leftDelim  string
+	rightDelim string
+	funcMap    template.FuncMap
 }
 
 // DefaultFuncMap defines built-in template functions.
@@ -183,13 +187,25 @@ var DefaultFuncMap = template.FuncMap{
 
 // New creates a Loader instance.
 func New() *Loader {
-	return &Loader{
-		tmpl: template.New("conf").Funcs(DefaultFuncMap),
+	l := &Loader{
+		funcMap: make(template.FuncMap, len(DefaultFuncMap)),
 	}
+	l.Funcs(DefaultFuncMap)
+	return l
+}
+
+func (l *Loader) newTemplate() *template.Template {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	tmpl := template.New("conf").Funcs(l.funcMap)
+	if l.leftDelim != "" && l.rightDelim != "" {
+		tmpl.Delims(l.leftDelim, l.rightDelim)
+	}
+	return tmpl
 }
 
 func (l *Loader) replacer(data []byte) ([]byte, error) {
-	t, err := l.tmpl.Parse(string(data))
+	t, err := l.newTemplate().Parse(string(data))
 	if err != nil {
 		return nil, errors.Wrap(err, "config parse by template failed")
 	}
@@ -267,10 +283,17 @@ func (l *Loader) LoadWithEnvTOMLBytes(conf interface{}, src []byte) error {
 
 // Delims sets the action delimiters to the specified strings.
 func (l *Loader) Delims(left, right string) {
-	l.tmpl.Delims(left, right)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.leftDelim = left
+	l.rightDelim = right
 }
 
 // Funcs adds the elements of the argument map.
 func (l *Loader) Funcs(funcMap template.FuncMap) {
-	l.tmpl.Funcs(funcMap)
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for name, fn := range funcMap {
+		l.funcMap[name] = fn
+	}
 }
