@@ -24,6 +24,14 @@ type customFunc func(data []byte) ([]byte, error)
 
 type unmarshaler func([]byte, interface{}) error
 
+func ReadWithEnv(configPath string) ([]byte, error) {
+	return defaultLoader.ReadWithEnv(configPath)
+}
+
+func ReadWithEnvBytes(b []byte) ([]byte, error) {
+	return defaultLoader.ReadWithEnvBytes(b)
+}
+
 // Load loads YAML files from `configPaths`.
 // and assigns decoded values into the `conf` value.
 func Load(conf interface{}, configPaths ...string) error {
@@ -119,22 +127,30 @@ func loadConfig(conf interface{}, configPath string, custom customFunc, unmarsha
 }
 
 func loadConfigBytes(conf interface{}, data []byte, custom customFunc, unmarshal unmarshaler) error {
-	var err error
-	if custom != nil {
-		data, err = custom(data)
-		if err != nil {
-			// Go 1.12 text/template catches a panic raised in user-defined function.
-			// https://golang.org/doc/go1.12#text/template
-			if strings.Index(err.Error(), "must_env: environment variable") != -1 {
-				panic(err)
-			}
-			return errors.Wrap(err, "custom failed")
-		}
+	data, err := readConfigBytes(data, custom)
+	if err != nil {
+		return err
 	}
 	if err := unmarshal(data, conf); err != nil {
 		return errors.Wrap(err, "parse failed")
 	}
 	return nil
+}
+
+func readConfigBytes(data []byte, custom customFunc) ([]byte, error) {
+	if custom == nil {
+		return data, nil
+	}
+	data, err := custom(data)
+	if err != nil {
+		// Go 1.12 text/template catches a panic raised in user-defined function.
+		// https://golang.org/doc/go1.12#text/template
+		if strings.Contains(err.Error(), "must_env: environment variable") {
+			panic(err)
+		}
+		return nil, err
+	}
+	return data, nil
 }
 
 // Delims sets the action delimiters to the specified strings.
@@ -313,4 +329,16 @@ func (l *Loader) unmarshalJSON(b []byte, v interface{}) error {
 // This option works with JSON only.
 func (l *Loader) DisallowUnknownFields() {
 	l.disallowUnknownFields = true
+}
+
+func (l *Loader) ReadWithEnv(configPath string) ([]byte, error) {
+	b, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		return nil, err
+	}
+	return readConfigBytes(b, l.replacer)
+}
+
+func (l *Loader) ReadWithEnvBytes(b []byte) ([]byte, error) {
+	return readConfigBytes(b, l.replacer)
 }
