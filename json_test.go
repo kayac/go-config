@@ -3,6 +3,7 @@ package config_test
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -32,7 +33,7 @@ func TestJSONEncode(t *testing.T) {
 		if err := json.Unmarshal([]byte(s), &before); err != nil {
 			t.Error("failed to unmarshal before", err)
 		}
-		conf := make(map[string]string, 0)
+		conf := make(map[string]string)
 		if err := config.LoadWithEnvJSONBytes(&conf, templateTestJSON); err != nil {
 			t.Error("failed to LoadWithEnvJSONBytes", err)
 		}
@@ -44,5 +45,25 @@ func TestJSONEncode(t *testing.T) {
 		if cmp.Diff(before, after) != "" {
 			t.Errorf("%v != %v", before, after)
 		}
+	}
+}
+
+func TestJSONDisallowUnknownFields(t *testing.T) {
+	st := struct {
+		Foo string `json:"foo"`
+	}{}
+	src := []byte(`{"foo":"FOO","bar":"BAR"}`)
+
+	loader := config.New()
+	if err := loader.LoadWithEnvJSONBytes(&st, src); err != nil {
+		t.Error("failed to LoadWithEnvJSONBytes", err)
+	}
+
+	loader2 := config.New()
+	loader2.DisallowUnknownFields()
+	if err := loader2.LoadWithEnvJSONBytes(&st, src); err == nil {
+		t.Error("disallow unknown fields should be raised")
+	} else if !strings.Contains(err.Error(), "unknown field") {
+		t.Error("unexpected error", err)
 	}
 }

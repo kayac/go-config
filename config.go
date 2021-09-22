@@ -154,10 +154,11 @@ var defaultLoader *Loader
 type Loader struct {
 	Data interface{}
 
-	mu         sync.Mutex
-	leftDelim  string
-	rightDelim string
-	funcMap    template.FuncMap
+	mu                    sync.Mutex
+	leftDelim             string
+	rightDelim            string
+	funcMap               template.FuncMap
+	disallowUnknownFields bool
 }
 
 // DefaultFuncMap defines built-in template functions.
@@ -225,7 +226,7 @@ func (l *Loader) Load(conf interface{}, configPaths ...string) error {
 // LoadJSON loads JSON files from `configPaths`.
 // and assigns decoded values into the `conf` value.
 func (l *Loader) LoadJSON(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, configPaths, nil, json.Unmarshal)
+	return loadWithFunc(conf, configPaths, nil, l.unmarshalJSON)
 }
 
 // LoadTOML loads TOML files from `configPaths`.
@@ -241,7 +242,7 @@ func (l *Loader) LoadBytes(conf interface{}, src []byte) error {
 
 // LoadJSONBytes loads JSON bytes
 func (l *Loader) LoadJSONBytes(conf interface{}, src []byte) error {
-	return loadConfigBytes(conf, src, nil, json.Unmarshal)
+	return loadConfigBytes(conf, src, nil, l.unmarshalJSON)
 }
 
 // LoadTOMLBytes loads TOML bytes
@@ -258,7 +259,7 @@ func (l *Loader) LoadWithEnv(conf interface{}, configPaths ...string) error {
 
 // LoadWithEnvJSON loads JSON files with Env
 func (l *Loader) LoadWithEnvJSON(conf interface{}, configPaths ...string) error {
-	return loadWithFunc(conf, configPaths, l.replacer, json.Unmarshal)
+	return loadWithFunc(conf, configPaths, l.replacer, l.unmarshalJSON)
 }
 
 // LoadWithEnvTOML loads TOML files with Env
@@ -273,7 +274,7 @@ func (l *Loader) LoadWithEnvBytes(conf interface{}, src []byte) error {
 
 // LoadWithEnvJSONBytes loads JSON bytes with Env
 func (l *Loader) LoadWithEnvJSONBytes(conf interface{}, src []byte) error {
-	return loadConfigBytes(conf, src, l.replacer, json.Unmarshal)
+	return loadConfigBytes(conf, src, l.replacer, l.unmarshalJSON)
 }
 
 // LoadWithEnvTOMLBytes loads TOML bytes with Env
@@ -296,4 +297,20 @@ func (l *Loader) Funcs(funcMap template.FuncMap) {
 	for name, fn := range funcMap {
 		l.funcMap[name] = fn
 	}
+}
+
+func (l *Loader) unmarshalJSON(b []byte, v interface{}) error {
+	dec := json.NewDecoder(bytes.NewReader(b))
+	if l.disallowUnknownFields {
+		dec.DisallowUnknownFields()
+	}
+	return dec.Decode(v)
+}
+
+// DisallowUnknownFields causes the Decoder to return an error
+// when the destination is a struct and the input contains object keys
+// which do not match any non-ignored, exported fields in the destination.
+// This option works with JSON only.
+func (l *Loader) DisallowUnknownFields() {
+	l.disallowUnknownFields = true
 }
