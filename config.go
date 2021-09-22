@@ -170,11 +170,10 @@ var defaultLoader *Loader
 type Loader struct {
 	Data interface{}
 
-	mu                    sync.Mutex
-	leftDelim             string
-	rightDelim            string
-	funcMap               template.FuncMap
-	disallowUnknownFields bool
+	mu         sync.Mutex
+	leftDelim  string
+	rightDelim string
+	funcMap    template.FuncMap
 }
 
 // DefaultFuncMap defines built-in template functions.
@@ -317,18 +316,7 @@ func (l *Loader) Funcs(funcMap template.FuncMap) {
 
 func (l *Loader) unmarshalJSON(b []byte, v interface{}) error {
 	dec := json.NewDecoder(bytes.NewReader(b))
-	if l.disallowUnknownFields {
-		dec.DisallowUnknownFields()
-	}
 	return dec.Decode(v)
-}
-
-// DisallowUnknownFields causes the Decoder to return an error
-// when the destination is a struct and the input contains object keys
-// which do not match any non-ignored, exported fields in the destination.
-// This option works with JSON only.
-func (l *Loader) DisallowUnknownFields() {
-	l.disallowUnknownFields = true
 }
 
 func (l *Loader) ReadWithEnv(configPath string) ([]byte, error) {
