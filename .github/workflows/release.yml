@@ -21,7 +21,7 @@ jobs:
 
     - name: setup tools
       run: |
-        go get -v github.com/mitchellh/gox@v1.0.1
+        go install github.com/mitchellh/gox@v1.0.1
         curl -sL https://github.com/tcnksm/ghr/releases/download/v0.13.0/ghr_v0.13.0_linux_amd64.tar.gz | tar zxvf - && install ghr_v0.13.0_linux_amd64/ghr ~/go/bin/
 
     - name: dist
