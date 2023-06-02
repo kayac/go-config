@@ -12,7 +12,6 @@ import (
 	"text/template"
 
 	"github.com/BurntSushi/toml"
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 )
 
@@ -118,10 +117,10 @@ func loadWithFunc(conf interface{}, configPaths []string, custom customFunc, unm
 func loadConfig(conf interface{}, configPath string, custom customFunc, unmarshal unmarshaler) error {
 	data, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		return errors.Wrapf(err, "%s read failed", configPath)
+		return fmt.Errorf("%s read failed: %w", configPath, err)
 	}
 	if err := loadConfigBytes(conf, data, custom, unmarshal); err != nil {
-		return errors.Wrapf(err, "%s load failed", configPath)
+		return fmt.Errorf("%s load failed: %w", configPath, err)
 	}
 	return nil
 }
@@ -132,7 +131,7 @@ func loadConfigBytes(conf interface{}, data []byte, custom customFunc, unmarshal
 		return err
 	}
 	if err := unmarshal(data, conf); err != nil {
-		return errors.Wrap(err, "parse failed")
+		return fmt.Errorf("parse failed: %w", err)
 	}
 	return nil
 }
@@ -223,11 +222,11 @@ func (l *Loader) newTemplate() *template.Template {
 func (l *Loader) replacer(data []byte) ([]byte, error) {
 	t, err := l.newTemplate().Parse(string(data))
 	if err != nil {
-		return nil, errors.Wrap(err, "config parse by template failed")
+		return nil, fmt.Errorf("config parse by template failed: %w", err)
 	}
 	buf := &bytes.Buffer{}
 	if err = t.Execute(buf, l.Data); err != nil {
-		return nil, errors.Wrap(err, "template attach failed")
+		return nil, fmt.Errorf("template attach failed: %w", err)
 	}
 	return buf.Bytes(), nil
 }
