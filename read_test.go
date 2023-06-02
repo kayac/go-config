@@ -2,7 +2,6 @@ package config_test
 
 import (
 	"bytes"
-	"os"
 	"testing"
 
 	"github.com/kayac/go-config"
@@ -11,8 +10,7 @@ import (
 var templateTestRead = []byte(`xxx{{ env "FOO" }}xxx`)
 
 func TestRead(t *testing.T) {
-	os.Setenv("FOO", "foobar")
-	defer os.Unsetenv("FOO")
+	t.Setenv("FOO", "foobar")
 
 	loader := config.New()
 	b, err := loader.ReadWithEnvBytes(templateTestRead)

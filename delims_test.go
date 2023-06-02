@@ -1,14 +1,13 @@
 package config_test
 
 import (
-	"os"
 	"testing"
 
 	"github.com/kayac/go-config"
 )
 
 func TestDelims(t *testing.T) {
-	os.Setenv("FOO", "test_foo")
+	t.Setenv("FOO", "test_foo")
 	config.Delims("<%", "%>")
 	defer config.Delims("{{", "}}")
 

@@ -26,7 +26,7 @@ var templateTestJSON = []byte(`{
 func TestJSONEncode(t *testing.T) {
 	defer os.Unsetenv("JSON")
 	for _, s := range testsJSON {
-		os.Setenv("JSON", s)
+		t.Setenv("JSON", s)
 
 		var before interface{}
 		if err := json.Unmarshal([]byte(s), &before); err != nil {
