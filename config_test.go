@@ -276,7 +276,7 @@ domain: '{{ must_env "MUST_DOMAIN" }}'
 		return
 	}
 	mustDomain := "must.example.com"
-	os.Setenv("MUST_DOMAIN", mustDomain)
+	t.Setenv("MUST_DOMAIN", mustDomain)
 	c := &Conf{}
 	if err := config.LoadWithEnv(c, f); err != nil {
 		t.Error(err)
@@ -285,7 +285,7 @@ domain: '{{ must_env "MUST_DOMAIN" }}'
 		t.Errorf("domain expected %s got %s", mustDomain, c.Domain)
 	}
 
-	os.Setenv("MUST_DOMAIN", "")
+	t.Setenv("MUST_DOMAIN", "")
 	c2 := &Conf{}
 	if err := config.LoadWithEnv(c2, f); err != nil {
 		t.Error(err)
@@ -300,7 +300,7 @@ func TestLoadMustEnvBytes(t *testing.T) {
 domain: '{{ must_env "MUST_DOMAIN" }}'
 `)
 	mustDomain := "must.example.com"
-	os.Setenv("MUST_DOMAIN", mustDomain)
+	t.Setenv("MUST_DOMAIN", mustDomain)
 	c := &Conf{}
 	if err := config.LoadWithEnvBytes(c, src); err != nil {
 		t.Error(err)
@@ -309,7 +309,7 @@ domain: '{{ must_env "MUST_DOMAIN" }}'
 		t.Errorf("domain expected %s got %s", mustDomain, c.Domain)
 	}
 
-	os.Setenv("MUST_DOMAIN", "")
+	t.Setenv("MUST_DOMAIN", "")
 	c2 := &Conf{}
 	if err := config.LoadWithEnvBytes(c2, src); err != nil {
 		t.Error(err)
@@ -333,7 +333,7 @@ func TestLoadJSON(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	os.Setenv("FOO", "BOO")
+	t.Setenv("FOO", "BOO")
 	c := make(map[string]string)
 	err = config.LoadWithEnvJSON(&c, a, b)
 	if err != nil {
@@ -364,7 +364,7 @@ bar = "baz"
 	if err != nil {
 		t.Error(err)
 	}
-	os.Setenv("FOO", "BOO")
+	t.Setenv("FOO", "BOO")
 	c := make(map[string]string)
 	err = config.LoadWithEnvTOML(&c, a, b)
 	if err != nil {

@@ -1,7 +1,6 @@
 package config_test
 
 import (
-	"os"
 	"strings"
 	"testing"
 	"text/template"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestFuncs(t *testing.T) {
-	os.Setenv("PREFIX", "test_")
+	t.Setenv("PREFIX", "test_")
 	loader := config.New()
 	loader.Funcs(template.FuncMap{
 		"word": func(keys ...string) string {
